@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avinash Singh Rajput - YouTube Monetization Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkbg: '#0f172a',
+                        cardbg: '#1e293b',
+                        accentred: '#ef4444'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-darkbg text-slate-100 min-h-screen flex flex-col font-sans selection:bg-red-500 selection:text-white">
+
+    <!-- Top Header -->
+    <header class="bg-cardbg border-b border-slate-800 sticky top-0 z-50 px-6 py-4 flex flex-wrap justify-between items-center gap-4 shadow-md">
+        <div class="flex items-center space-x-3">
+            <div class="bg-red-600 p-2.5 rounded-xl text-white shadow-lg shadow-red-600/30 flex items-center justify-center">
+                <i class="fa-brands fa-youtube text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                    Avinash Singh Rajput <span class="text-xs bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-0.5 rounded-full font-medium">Monetization Tracker</span>
+                </h1>
+                <p class="text-xs text-slate-400">Managed by DRAX | Real-Time YouTube Data & Discord Notifier</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3 flex-wrap">
+            <!-- API Key Modal Trigger -->
+            <button onclick="openApiModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-xl text-sm font-medium border border-slate-700 transition flex items-center gap-2">
+                <i class="fa-solid fa-key text-yellow-400"></i> YouTube API Settings
+            </button>
+            <button onclick="fetchYouTubeData()" id="syncBtn" class="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-lg shadow-red-600/20 flex items-center gap-2">
+                <i class="fa-solid fa-rotate"></i> Sync Live Data
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Left 2 Columns: Stats & Progress -->
+        <div class="lg:col-span-2 space-y-6">
+
+            <!-- 4,000 Watch Hours Goal Card -->
+            <div class="bg-cardbg border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+                <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-red-600/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <span class="text-xs font-semibold uppercase tracking-wider text-red-400 bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20">Monetization Milestone</span>
+                        <h2 class="text-2xl font-bold text-white mt-2">4,000 Watch Hours Goal</h2>
+                    </div>
+                    <div class="text-right">
+                        <span id="watchHourPercent" class="text-3xl font-extrabold text-red-500">0.0%</span>
+                        <p class="text-xs text-slate-400">Completed</p>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="w-full bg-slate-800 h-4 rounded-full overflow-hidden p-0.5 border border-slate-700/50 mb-4">
+                    <div id="watchHourProgressBar" class="bg-gradient-to-r from-red-600 to-orange-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-2 border-t border-slate-800/80">
+                    <div>
+                        <p class="text-xs text-slate-400">Current Watch Hours</p>
+                        <p id="currentWatchHoursVal" class="text-lg font-bold text-white mt-0.5">0 hrs</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400">Remaining Needed</p>
+                        <p id="remainingWatchHoursVal" class="text-lg font-bold text-orange-400 mt-0.5">4,000 hrs</p>
+                    </div>
+                    <div class="col-span-2 sm:col-span-1">
+                        <p class="text-xs text-slate-400">Subscribers (1,000 Req)</p>
+                        <p id="currentSubsVal" class="text-lg font-bold text-emerald-400 mt-0.5">0 / 1,000</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Core Metrics Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-cardbg border border-slate-800 rounded-2xl p-5 shadow-lg">
+                    <div class="flex items-center justify-between text-slate-400 mb-2">
+                        <span class="text-sm font-medium">Total Subscribers</span>
+                        <i class="fa-solid fa-users text-blue-400 text-lg"></i>
+                    </div>
+                    <p id="statSubs" class="text-2xl font-bold text-white">---</p>
+                    <span class="text-xs text-emerald-400 flex items-center gap-1 mt-1"><i class="fa-solid fa-arrow-trend-up"></i> Live YouTube API</span>
+                </div>
+                <div class="bg-cardbg border border-slate-800 rounded-2xl p-5 shadow-lg">
+                    <div class="flex items-center justify-between text-slate-400 mb-2">
+                        <span class="text-sm font-medium">Total Channel Views</span>
+                        <i class="fa-solid fa-eye text-purple-400 text-lg"></i>
+                    </div>
+                    <p id="statViews" class="text-2xl font-bold text-white">---</p>
+                    <span class="text-xs text-purple-400 flex items-center gap-1 mt-1"><i class="fa-solid fa-chart-simple"></i> Public Metrics</span>
+                </div>
+                <div class="bg-cardbg border border-slate-800 rounded-2xl p-5 shadow-lg">
+                    <div class="flex items-center justify-between text-slate-400 mb-2">
+                        <span class="text-sm font-medium">Total Videos / Streams</span>
+                        <i class="fa-solid fa-video text-red-400 text-lg"></i>
+                    </div>
+                    <p id="statVideos" class="text-2xl font-bold text-white">---</p>
+                    <span class="text-xs text-red-400 flex items-center gap-1 mt-1"><i class="fa-solid fa-film"></i> Uploads & Lives</span>
+                </div>
+            </div>
+
+            <!-- Latest Videos & Streams Feed -->
+            <div class="bg-cardbg border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-brands fa-youtube text-red-500"></i> Latest Channel Videos & Streams
+                    </h3>
+                    <span class="text-xs text-slate-400">Auto-synced from YouTube</span>
+                </div>
+                <div id="videoGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="text-slate-400 text-sm py-8 text-center col-span-2">
+                        Click <strong class="text-white">"Sync Live Data"</strong> above to load Avinash's latest streams and videos!
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Column: DRAX Stream Notifier & Config -->
+        <div class="space-y-6">
+
+            <!-- DRAX Discord Stream Notifier Box -->
+            <div class="bg-cardbg border border-slate-800 rounded-2xl p-6 shadow-xl relative">
+                <div class="absolute top-0 right-0 bg-indigo-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">DRAX Panel</div>
+                <h3 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
+                    <i class="fa-brands fa-discord text-indigo-400"></i> Stream Notifier
+                </h3>
+                <p class="text-xs text-slate-400 mb-4">Generate instant Discord announcement posts for Avinash's streams.</p>
+                
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Game / Category</label>
+                        <select id="notifierGame" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500">
+                            <option value="BGMI">BGMI (Battlegrounds Mobile India)</option>
+                            <option value="Phasmophobia">Phasmophobia Co-op Stream</option>
+                            <option value="Minecraft">Minecraft Server Gameplay</option>
+                            <option value="Roblox">Roblox Session</option>
+                            <option value="Just Chatting">Just Chatting / Q&A</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Stream Link URL</label>
+                        <input type="text" id="notifierUrl" value="https://youtube.com/@theavinashsinghrajput/live" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500">
+                    </div>
+                    <button onclick="generateDiscordMsg()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 rounded-xl text-sm font-medium transition shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Copy Discord @everyone Post
+                    </button>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-slate-800">
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Preview Output:</label>
+                    <textarea id="discordOutput" rows="4" readonly class="w-full bg-slate-900/80 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-300 font-mono resize-none focus:outline-none">Click button above to generate announcement...</textarea>
+                </div>
+            </div>
+
+            <!-- Manual Watch Hours Override -->
+            <div class="bg-cardbg border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <h3 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left text-yellow-400"></i> Watch Hours Manager
+                </h3>
+                <p class="text-xs text-slate-400 mb-4">Enter exact watch hours from YouTube Studio analytics.</p>
+                
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Current Watch Hours (H)</label>
+                        <input type="number" id="manualWatchHours" value="1250" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500">
+                    </div>
+                    <button onclick="saveManualWatchHours()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 py-2 rounded-xl text-sm font-medium border border-slate-700 transition">
+                        Update Watch Hours Goal
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- API Settings Modal -->
+    <div id="apiModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-cardbg border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
+                <i class="fa-solid fa-key text-yellow-400"></i> YouTube API Settings
+            </h3>
+            <p class="text-xs text-slate-400 mb-4">Saved securely in your browser's local storage so it persists across reloads.</p>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">YouTube Data API v3 Key</label>
+                    <input type="password" id="apiKeyInput" placeholder="Paste your Google Cloud API Key here..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Channel Handle / ID</label>
+                    <input type="text" id="channelHandleInput" value="@theavinashsinghrajput" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500">
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 mt-6">
+                <button onclick="closeApiModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm transition">Cancel</button>
+                <button onclick="saveApiSettings()" class="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl text-sm font-medium transition shadow-lg shadow-red-600/20">Save & Connect</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // Load saved settings on startup
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedKey = localStorage.getItem('yt_api_key') || '';
+            const savedHandle = localStorage.getItem('yt_handle') || '@theavinashsinghrajput';
+            const savedHours = localStorage.getItem('yt_watch_hours') || '1250';
+
+            document.getElementById('apiKeyInput').value = savedKey;
+            document.getElementById('channelHandleInput').value = savedHandle;
+            document.getElementById('manualWatchHours').value = savedHours;
+
+            updateWatchHourProgress(parseFloat(savedHours));
+            
+            if(savedKey) {
+                fetchYouTubeData();
+            }
+        });
+
+        function openApiModal() {
+            document.getElementById('apiModal').classList.remove('hidden');
+        }
+
+        function closeApiModal() {
+            document.getElementById('apiModal').classList.add('hidden');
+        }
+
+        function saveApiSettings() {
+            const key = document.getElementById('apiKeyInput').value.trim();
+            const handle = document.getElementById('channelHandleInput').value.trim();
+            
+            localStorage.setItem('yt_api_key', key);
+            localStorage.setItem('yt_handle', handle);
+            
+            closeApiModal();
+            fetchYouTubeData();
+        }
+
+        function saveManualWatchHours() {
+            const hours = document.getElementById('manualWatchHours').value;
+            localStorage.setItem('yt_watch_hours', hours);
+            updateWatchHourProgress(parseFloat(hours));
+            alert('Watch hours updated successfully!');
+        }
+
+        function updateWatchHourProgress(currentHours) {
+            const goal = 4000;
+            const percent = Math.min(100, (currentHours / goal) * 100).toFixed(1);
+            const remaining = Math.max(0, goal - currentHours);
+
+            document.getElementById('currentWatchHoursVal').innerText = currentHours.toLocaleString() + ' hrs';
+            document.getElementById('remainingWatchHoursVal').innerText = remaining.toLocaleString() + ' hrs';
+            document.getElementById('watchHourPercent').innerText = percent + '%';
+            document.getElementById('watchHourProgressBar').style.width = percent + '%';
+        }
+
+        async function fetchYouTubeData() {
+            const apiKey = localStorage.getItem('yt_api_key');
+            let handle = localStorage.getItem('yt_handle') || '@theavinashsinghrajput';
+
+            if (!apiKey) {
+                openApiModal();
+                return;
+            }
+
+            // Clean handle prefix
+            if (handle.startsWith('@')) {
+                handle = handle.substring(1);
+            }
+
+            try {
+                // 1. Fetch Channel ID & Stats via ForHandle or Username
+                const channelUrl = `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,contentDetails&forHandle=${handle}&key=${apiKey}`;
+                const res = await fetch(channelUrl);
+                const data = await res.json();
+
+                if (!data.items || data.items.length === 0) {
+                    alert('Channel not found! Please check the handle in settings.');
+                    return;
+                }
+
+                const channel = data.items[0];
+                const stats = channel.statistics;
+                const uploadsPlaylistId = channel.contentDetails.relatedPlaylists.uploads;
+
+                // Update UI Stats
+                document.getElementById('statSubs').innerText = Number(stats.subscriberCount).toLocaleString();
+                document.getElementById('statViews').innerText = Number(stats.viewCount).toLocaleString();
+                document.getElementById('statVideos').innerText = Number(stats.videoCount).toLocaleString();
+                document.getElementById('currentSubsVal').innerText = Number(stats.subscriberCount).toLocaleString() + ' / 1,000';
+
+                // 2. Fetch Latest Uploads/Streams
+                const playlistUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=6&key=${apiKey}`;
+                const playlistRes = await fetch(playlistUrl);
+                const playlistData = await playlistRes.json();
+
+                const videoGrid = document.getElementById('videoGrid');
+                videoGrid.innerHTML = '';
+
+                if (playlistData.items && playlistData.items.length > 0) {
+                    playlistData.items.forEach(item => {
+                        const snippet = item.snippet;
+                        const videoId = snippet.resourceId.videoId;
+                        const title = snippet.title;
+                        const thumbnail = snippet.thumbnails.medium?.url || snippet.thumbnails.default?.url;
+                        const publishedAt = new Date(snippet.publishedAt).toLocaleDateString();
+
+                        const card = `
+                            <a href="https://youtube.com/watch?v=${videoId}" target="_blank" class="bg-slate-900/60 border border-slate-800 rounded-xl overflow-hidden hover:border-red-500/50 transition group flex flex-col">
+                                <div class="relative aspect-video bg-slate-800 overflow-hidden">
+                                    <img src="${thumbnail}" alt="${title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                                    <div class="absolute bottom-2 right-2 bg-black/80 px-2 py-0.5 rounded text-[10px] text-white">YouTube</div>
+                                </div>
+                                <div class="p-3 flex-1 flex flex-col justify-between">
+                                    <h4 class="text-sm font-semibold text-white line-clamp-2 group-hover:text-red-400 transition">${title}</h4>
+                                    <p class="text-xs text-slate-400 mt-2"><i class="fa-regular fa-calendar"></i> Published: ${publishedAt}</p>
+                                </div>
+                            </a>
+                        `;
+                        videoGrid.innerHTML += card;
+                    });
+                } else {
+                    videoGrid.innerHTML = '<div class="text-slate-400 text-sm py-4 text-center col-span-2">No public videos found.</div>';
+                }
+
+            } catch (err) {
+                console.error(err);
+                alert('Error fetching YouTube data. Check your API key permissions.');
+            }
+        }
+
+        function generateDiscordMsg() {
+            const game = document.getElementById('notifierGame').value;
+            const url = document.getElementById('notifierUrl').value;
+            const currentHours = document.getElementById('currentWatchHoursVal').innerText;
+            const percent = document.getElementById('watchHourPercent').innerText;
+
+            const msg = `@everyone 🚨 **AVINASH IS LIVE NOW!** 🚨\n\nPlaying: **${game}**\nCome hang out in the stream and support the grind to monetization! 🔥\n\n📺 **Watch here:** ${url}\n\n📊 **Channel Progress:** ${currentHours} / 4,000 Watch Hours (${percent} completed)`;
+            
+            document.getElementById('discordOutput').value = msg;
+            navigator.clipboard.writeText(msg);
+            alert('Discord announcement copied to clipboard!');
+        }
+    </script>
+</body>
+</html>
