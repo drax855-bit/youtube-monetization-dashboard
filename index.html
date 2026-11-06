@@ -171,7 +171,7 @@
                 <h3 class="font-bold text-lg flex items-center gap-2 mb-1">
                     <i class="fa-solid fa-clock-rotate-left text-amber-400"></i> Watch Hours Manager
                 </h3>
-                <p class="text-xs text-slate-400 mb-4">Sync automatically with your Editor Google account or update manually from Studio.</p>
+                <p class="text-xs text-slate-400 mb-4">Sync automatically via Google OAuth or update manually from Studio.</p>
 
                 <!-- Google OAuth Auto-Sync Button -->
                 <button onclick="authenticateGoogle()" class="w-full bg-white hover:bg-slate-100 text-slate-900 font-semibold py-2.5 rounded-lg text-sm transition flex items-center justify-center gap-2 mb-4 shadow">
@@ -386,17 +386,29 @@
 
         async function fetchWatchHoursAnalytics(accessToken) {
             try {
+                // Dynamically fetch the correct managed channel ID for the signed-in account
+                const channelRes = await fetch('https://www.googleapis.com/youtube/v3/channels?part=id&mine=true', {
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+                const channelData = await channelRes.json();
+                
+                if (!channelData.items || channelData.items.length === 0) {
+                    alert('No channel found for this account.');
+                    return;
+                }
+                
+                const channelId = channelData.items[0].id;
                 const today = new Date().toISOString().split('T')[0];
                 const oneYearAgo = new Date(new Date().setFullYear(new Date().getFullYear() - 1)).toISOString().split('T')[0];
 
-                const url = `https://youtubeanalytics.googleapis.com/v2/reports?ids=channel==MINE&startDate=${oneYearAgo}&endDate=${today}&metrics=estimatedMinutesWatched`;
+                const url = `https://youtubeanalytics.googleapis.com/v2/reports?ids=channel==${channelId}&startDate=${oneYearAgo}&endDate=${today}&metrics=estimatedMinutesWatched`;
                 const res = await fetch(url, {
                     headers: { 'Authorization': `Bearer ${accessToken}` }
                 });
                 const data = await res.json();
 
                 if (data.error) {
-                    alert('Google Analytics API Error: ' + data.error.message + '\n\nNote: Watch Hours API often requires the primary Channel Owner account. If you are an Editor, use the Manual Studio Entry box right below!');
+                    alert('Google Analytics API Error: ' + data.error.message);
                     return;
                 }
 
@@ -409,7 +421,7 @@
                 alert(`Synced Watch Time: ${hours} hours!`);
             } catch (err) {
                 console.error(err);
-                alert('Could not fetch watch hours automatically. Use the Manual Studio Entry box.');
+                alert('Could not fetch watch hours automatically.');
             }
         }
     </script>
